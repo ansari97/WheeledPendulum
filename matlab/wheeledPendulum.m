@@ -3,30 +3,31 @@ clear
 clc
 
 %% define wheel parameters
-L = 0.30; % total length of the rod
-l = L/2; % length from pivot to center of mass
-m = 1;
-I_r = 1/3*m*L^2;
-r = 0.05;
-M = 0.25;
-I_w = 1/2*M*r^2;
+L = 300e-3; % total length of the rod in m
+l = L/2; % length from pivot to center of mass, m
+m = 500e-3; % torso mass in kg
+I_r = 1/12*m*L^2; % for a slender rod about the rotation axis passing through the CoM
+% I_r = 100;
+r = 100e-3; % wheel radius in m
+M = 250e-3; % wheel mass in kg
+I_w = 1/2*M*r^2; % for a solid disc of mass M and radius r; could be different if wheel geometry is different
 
 wheel_param = [l, m, I_r, r, M, I_w];
 
 
 %% define initial conditions
-init_x = 0;
-init_ang = 0.5;
-init_vel = 0; 
-init_ang_vel = 0;
+init_x = 0.5;
+init_ang = 0.01;
+init_vel = -1; 
+init_ang_vel = 0.1;
 
 init_con = [init_x; init_ang; init_vel; init_ang_vel];
 
-%% Input
-T = 100;
+%% Torque Input
+T = 150;
 
 %% solver settings
-
+solver_max_step = 0.01;
 time_interval = [0 5];
 % create ode object
 E = odeEvent(EventFcn=@(t, q)collisionEvent(t, q, wheel_param), ...
@@ -35,7 +36,7 @@ E = odeEvent(EventFcn=@(t, q)collisionEvent(t, q, wheel_param), ...
 
 F = ode(ODEFcn = @(t, q) diffFunc(t, q, wheel_param, T), InitialValue = init_con, EventDefinition = E,  Solver = 'ode45');
 % set solver options
-F.SolverOptions.MaxStep = 0.01;
+F.SolverOptions.MaxStep = solver_max_step;
 
 % Solve ODE
 q_sol = solve(F, time_interval(1), time_interval(2), Refine=8);
@@ -46,12 +47,74 @@ state = q_sol.Solution;
 t = q_sol.Time;
 sol = [t; state(1, :); state(2, :); state(3, :); state(4, :)];
 
-plot(t, state(1, :))
-figure;
-plot(t, state(2, :))
-figure;
-plot(t, state(3, :))
-figure;
-plot(t, state(4, :))
+disp(strcat('Simulation time: ', num2str(max(t)), ' s'));
 
-drawFigure(wheel_param, state)
+plot(t, state(1, :)); hold on;
+title("x vs time");
+xlabel("t (s)");
+ylabel("x (m)");
+grid on;
+xline(0);
+yline(0);
+hold off;
+
+figure;
+plot(t, state(2, :)); hold on;
+title("theta vs time");
+xlabel("t (s)");
+ylabel("${\theta} (rad)$", 'Interpreter','latex');
+grid on;
+xline(0);
+yline(0);
+hold off;
+
+figure;
+plot(t, state(3, :)); hold on;
+title("x\_dot vs time");
+xlabel("t (s)");
+ylabel("$\dot{x} (m/s)$", 'Interpreter','latex');
+grid on;
+xline(0);
+yline(0);
+hold off;
+
+figure;
+plot(t, state(4, :)); hold on;
+title("theta\_dot vs time");
+xlabel("t (s)");
+ylabel('$\dot{\theta} (rad/s)$', 'Interpreter','latex');
+grid on;
+xline(0);
+yline(0);
+hold off;
+
+frame = drawFigure(wheel_param, t, state);
+
+make_movie = false;
+
+% make a video
+if make_movie
+    len = length(t);
+    time_max = max(t); % end time for the solution
+    time_min = min(t); % start time of the solution (should be 0)
+
+    t_movie = time_min:solver_max_step*10:time_max; % time for the movie frame
+    % t_ind = zeros(length(t_movie))
+    for i = 1:length(t_movie)
+        ind = find(abs(t - t_movie(i)) < solver_max_step/10);
+
+        if ~isempty(ind) > 0
+            if length(ind)>1
+                ind = round(mean(ind));
+            end
+            t_ind(i) = ind;
+        elseif isempty(ind)
+            % do nothing
+        end
+    end
+
+
+    frame = frame(t_ind);
+    movie(frame, 1, 10);
+end
+

@@ -19,23 +19,21 @@ B = m*r*l*cos(q(2));
 C = m*l*cos(q(2));
 D = I_r + m*l^2;
 
-M = [-A, B;
-    -C, D];
+M = [1, 0, 0, 0;
+    0, 1, 0, 0;
+    0, 0, -A, B;
+    0, 0, -C, D];
 
-H = [1; 1];
+H = [0; 0; 1; 1];
 
 f1 = m*r*l*sin(q(2)) * q(4)^2;
 f2 = m*g*l*sin(q(2));
 
-f = [f1; f2];
+f = [q(3); 
+    q(4); 
+    f1; 
+    f2];
 
-func = M\(H*T + f);
-
-qdot(1) = q(3);
-qdot(2) = q(4);
-qdot(3) = func(1);
-qdot(4) = func(2);
-
-qdot = qdot';
+qdot = M\(H*T + f);
 
 end
