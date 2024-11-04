@@ -16,23 +16,23 @@ wheel_param = [l, m, I_r, r, M, I_w];
 
 
 %% define initial conditions
-init_x = 0.5;
-init_ang = 0.01;
-init_vel = -1; 
+init_x = 0;
+init_ang = 0;
+init_vel = 0.1; 
 init_ang_vel = 0.1;
 
 init_con = [init_x; init_ang; init_vel; init_ang_vel];
 
 %% Torque Input
-T = 150;
+T = 0;
 
 %% solver settings
-solver_max_step = 0.01;
-time_interval = [0 5];
+solver_max_step = 0.05;
+time_interval = [0 2];
 % create ode object
 E = odeEvent(EventFcn=@(t, q)collisionEvent(t, q, wheel_param), ...
     Direction="ascending", ...
-    Response="stop");
+    Response="proceed");
 
 F = ode(ODEFcn = @(t, q) diffFunc(t, q, wheel_param, T), InitialValue = init_con, EventDefinition = E,  Solver = 'ode45');
 % set solver options
@@ -82,6 +82,16 @@ figure;
 plot(t, state(4, :)); hold on;
 title("theta\_dot vs time");
 xlabel("t (s)");
+ylabel('$\dot{\theta} (rad/s)$', 'Interpreter','latex');
+grid on;
+xline(0);
+yline(0);
+hold off;
+
+figure;
+plot(state(2, :), state(4, :)); hold on;
+title("theta\_dot vs theta");
+xlabel('${\theta} (rad)$', 'Interpreter','latex');
 ylabel('$\dot{\theta} (rad/s)$', 'Interpreter','latex');
 grid on;
 xline(0);
