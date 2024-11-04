@@ -1,7 +1,10 @@
-function qdot = diffFunc(t, q, param, T)
+function qdot = wheeledPendulumDynamcis(t, q, param, K)
 % diffFun is the system of differential equations describing the wheeled
 % pendulum
 %
+
+% Full state feedback controller
+T = -K*q;
 
 % Unpack parameters
 l = param(1);

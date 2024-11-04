@@ -16,25 +16,25 @@ wheel_param = [l, m, I_r, r, M, I_w];
 
 
 %% define initial conditions
-init_x = 0;
-init_ang = 0;
-init_vel = 0.1; 
-init_ang_vel = 0.1;
+init_x = 5;
+init_ang = deg2rad(30);
+init_vel = 1; 
+init_ang_vel = 0.5;
 
 init_con = [init_x; init_ang; init_vel; init_ang_vel];
 
-%% Torque Input
-T = 0;
+%% Desired values
+q_des = [0, 0, 1, 0]';
 
 %% solver settings
-solver_max_step = 0.05;
-time_interval = [0 2];
+solver_max_step = 0.02;
+time_interval = [0 10];
 % create ode object
 E = odeEvent(EventFcn=@(t, q)collisionEvent(t, q, wheel_param), ...
     Direction="ascending", ...
-    Response="proceed");
+    Response="stop");
 
-F = ode(ODEFcn = @(t, q) diffFunc(t, q, wheel_param, T), InitialValue = init_con, EventDefinition = E,  Solver = 'ode45');
+F = ode(ODEFcn = @(t, q) wheeledPendulumDynamcis(t, q - q_des, wheel_param, controllerGainLQR(wheel_param)), InitialValue = init_con, EventDefinition = E,  Solver = 'ode45');
 % set solver options
 F.SolverOptions.MaxStep = solver_max_step;
 
@@ -98,7 +98,17 @@ xline(0);
 yline(0);
 hold off;
 
-frame = drawFigure(wheel_param, t, state);
+figure;
+plot(state(1, :), state(3, :)); hold on;
+title("x\_dot vs x");
+xlabel('${x} (m)$', 'Interpreter','latex');
+ylabel('$\dot{x} (m/s)$', 'Interpreter','latex');
+grid on;
+xline(0);
+yline(0);
+hold off;
+
+% frame = drawFigure(wheel_param, t, state);
 
 make_movie = false;
 
